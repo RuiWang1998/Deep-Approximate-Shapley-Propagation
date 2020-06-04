@@ -46,7 +46,6 @@ class DASP(object):
     def __init__(self, model:nn.Module):
         self.model = model
 
-
     def _convert_to_lpdn(self, model:nn.Module):
         """
         Convert a generic torch module into lpdn model
