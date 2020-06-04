@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-from lightprobnets import contrib
+from lightprobnets.contrib import adf
 
 
 def convert_2_lpdn(model:nn.Module, convert_weights:bool=True)->nn.Module:
@@ -19,17 +19,26 @@ def convert_2_lpdn(model:nn.Module, convert_weights:bool=True)->nn.Module:
         else:
             if isinstance(module, nn.Conv2d):
                 layer_old = module
-                layer_new = contrib.adf.Conv2d(module.in_channels, module.out_channels, module.kernel_size, module.stride,
-                                     module.padding, module.dilation, module.groups,
-                                     module.bias is not None, module.padding_mode)
+                layer_new = adf.Conv2d(module.in_channels, module.out_channels, module.kernel_size, module.stride,
+                                       module.padding, module.dilation, module.groups,
+                                       module.bias is not None, module.padding_mode)
             elif isinstance(module, nn.Linear):
-                layer_old = module
-                layer_new = contrib.adf.Linear(module.in_features, module.out_features, module.bias is not None)
+                layer_new = adf.Linear(module.in_features, module.out_features, module.bias is not None)
             elif isinstance(module, nn.ReLU):
-                layer_old = module
-                layer_new = contrib.adf.ReLU()
+                layer_new = adf.ReLU()
+            elif isinstance(module, nn.LeakyReLU):
+                layer_new = adf.LeakyReLU(negative_slope=module.negative_slope)
+            elif isinstance(module, nn.Dropout):
+                layer_new = adf.Dropout(module.p)
+            elif isinstance(module, nn.MaxPool2d):
+                layer_new = adf.MaxPool2d()
+            elif isinstance(module, nn.ConvTranspose2d):
+                layer_new = adf.ConvTranspose2d(module.in_channels, module.out_channels, module.kernel_size,
+                                                module.stride, module.padding, module.output_padding, module.groups,
+                                                module.bias, module.dilation)
             else:
                 raise NotImplementedError(f"Layer type {module} not supported")
+            layer_old = module
             try:
                 if convert_weights:
                     layer_new.weight = layer_old.weight
