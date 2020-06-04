@@ -17,29 +17,27 @@ def convert_2_lpdn(model:nn.Module, convert_weights:bool=True)->nn.Module:
             model._modules[name] = convert_2_lpdn(module, convert_weights)
 
         else:
-            if not hasattr(module, "converted"):
-                if isinstance(module, nn.Conv2d):
-                    layer_old = module
-                    layer_new = contrib.adf.Conv2d(module.in_channels, module.out_channels, module.kernel_size, module.stride,
-                                         module.padding, module.dilation, module.groups,
-                                         module.bias is not None, module.padding_mode)
-                elif isinstance(module, nn.Linear):
-                    layer_old = module
-                    layer_new = contrib.adf.Linear(module.in_features, module.out_features, module.bias is not None)
-                elif isinstance(module, nn.ReLU):
-                    layer_old = module
-                    layer_new = contrib.adf.ReLU()
-                else:
-                    raise NotImplementedError(f"Layer type {module} not supported")
-                try:
-                    if convert_weights:
-                        layer_new.weight = layer_old.weight
-                        layer_new.bias = layer_old.bias
-                except AttributeError:
-                    pass
+            if isinstance(module, nn.Conv2d):
+                layer_old = module
+                layer_new = contrib.adf.Conv2d(module.in_channels, module.out_channels, module.kernel_size, module.stride,
+                                     module.padding, module.dilation, module.groups,
+                                     module.bias is not None, module.padding_mode)
+            elif isinstance(module, nn.Linear):
+                layer_old = module
+                layer_new = contrib.adf.Linear(module.in_features, module.out_features, module.bias is not None)
+            elif isinstance(module, nn.ReLU):
+                layer_old = module
+                layer_new = contrib.adf.ReLU()
+            else:
+                raise NotImplementedError(f"Layer type {module} not supported")
+            try:
+                if convert_weights:
+                    layer_new.weight = layer_old.weight
+                    layer_new.bias = layer_old.bias
+            except AttributeError:
+                pass
 
-                model._modules[name] = layer_new
-                model._modules[name].converted = True
+            model._modules[name] = layer_new
 
     return model
 
